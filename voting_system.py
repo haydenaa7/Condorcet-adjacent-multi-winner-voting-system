@@ -103,7 +103,7 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--election-file", dest="ballots", required=True)
-    parser.add_argument("-n", "--num-winners", dest="num_winners", default=3)
+    parser.add_argument("-n", "--num-winners", dest="num_winners", default=1)
     parser.add_argument("-a", "--alpha", dest="alpha", default=0.01)
     args = parser.parse_args()
 
