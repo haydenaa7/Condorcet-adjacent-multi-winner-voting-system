@@ -7,12 +7,12 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
     is manipulated by the alpha value to enforce determinism.
     Ballot votes (individual voting power) is recalculated with recalculate_ballots() once a winner is determined, similar to STV.
     '''
-    round_winners = {candidate : 0 for candidate in candidates}
+    score = {candidate : 0 for candidate in candidates}
     print("ROUND START")
     # Continues to loop while a winner is not found
-    while (len(candidates) - 1) not in round_winners.values():
+    while (len(candidates) - 1) not in score.values():
         print("Alpha: " + str(alpha))
-        round_winners = {candidate : 0 for candidate in candidates}
+        score = {candidate : 0 for candidate in candidates}
         pairs = [(candidate, candidate) for candidate in candidates]
         stop = False
         # Do Concorcet matrix calculations with distance
@@ -43,13 +43,13 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
                             else:
                                 opponent_points += votes * (1 + distance * alpha)
                     if candidate_points > opponent_points:
-                        round_winners[candidate] += 1
-                        if round_winners[candidate] == len(candidates) - 1:
+                        score[candidate] += 1
+                        if score[candidate] == len(candidates) - 1:
                             stop = True
                         print(candidate + " beat " + opponent + " " + str(candidate_points) + " to " + str(opponent_points))
                     else:
-                        round_winners[opponent] += 1
-                        if round_winners[opponent] == len(candidates) - 1:
+                        score[opponent] += 1
+                        if score[opponent] == len(candidates) - 1:
                             stop = True
                         print(opponent + " beat " + candidate + " " + str(opponent_points) + " to " + str(candidate_points))
                     pairs.append((opponent, candidate))
@@ -57,8 +57,8 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
         # Increase alpha proportionally every iteration until winner or loser found
         alpha *= 2
 
-    print("Round results: " + str(round_winners))
-    winner = list(round_winners.keys())[list(round_winners.values()).index(len(candidates) - 1)]
+    print("Round results: " + str(score))
+    winner = list(score.keys())[list(score.values()).index(len(candidates) - 1)]
     print(winner + " is the round winner\n")
     if last_round:
         return winner
