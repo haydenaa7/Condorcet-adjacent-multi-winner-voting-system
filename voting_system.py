@@ -47,7 +47,7 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
                         if score[candidate] == len(candidates) - 1:
                             stop = True
                         print(candidate + " beat " + opponent + " " + str(candidate_points) + " to " + str(opponent_points))
-                    else:
+                    elif opponent_points > candidate_points:
                         score[opponent] += 1
                         if score[opponent] == len(candidates) - 1:
                             stop = True
@@ -74,7 +74,7 @@ def recalculate_ballots(ballots : dict, winner : str, alpha : float) -> dict:
     new_ballots = {}
     for ballot in ballots:
         if len(ballot) != 1:
-            distance_from_first = ballot.index(winner)
+            distance_from_first = len(ballot) if winner not in ballot else ballot.index(winner)
             ballot_without_winner = tuple(filter(lambda x : x != winner, ballot))
             if ballot_without_winner not in new_ballots:
                 new_ballots[ballot_without_winner] = ballots[ballot] / (1 + distance_from_first * alpha)
