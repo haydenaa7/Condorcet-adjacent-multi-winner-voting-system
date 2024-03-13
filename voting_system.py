@@ -1,6 +1,6 @@
 import argparse
 
-def process_round(ballots : dict, candidates : list, alpha : float, last_round : bool = False) -> dict:
+def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_round : bool = False) -> dict:
     '''
     Main function to generate winner from given ballots and alpha (hyperparameter) value.
     Uses Condorcet winner criterion to calculate a matrix for each pair of candidates, but where the number of votes (points)
@@ -37,7 +37,6 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
                             # General formula for distance-modified votes is votes * (1 + distance * alpha)
                             # For v = 10000, d = 5, a = 0.01, dmv = 10000 * (1 + 5 * 0.01) = 10500 votes after modification
                             distance = ranking.index(candidate) - ranking.index(opponent)
-                            #print(votes * (1 + distance*alpha))
                             if distance < 0:
                                 candidate_points += votes * (1 + distance * alpha)
                             else:
@@ -54,11 +53,11 @@ def process_round(ballots : dict, candidates : list, alpha : float, last_round :
                         print(opponent + " beat " + candidate + " " + str(opponent_points) + " to " + str(candidate_points))
                     pairs.append((opponent, candidate))
                     pairs.append((candidate, opponent))
-        # Increase alpha proportionally every iteration until winner or loser found
+        # Increase alpha proportionally every iteration until winner found
         alpha *= 2
 
     print("Round results: " + str(score))
-    winner = list(score.keys())[list(score.values()).index(len(candidates) - 1)]
+    winner = list(filter(lambda x : score[x] == len(candidates) - 1, score))[0]
     print(winner + " is the round winner\n")
     if last_round:
         return winner
