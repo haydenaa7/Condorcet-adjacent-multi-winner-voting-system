@@ -1,6 +1,8 @@
 import argparse
+from common.types import Ballot, Scheme
+import math
 
-def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_round : bool = False) -> dict:
+def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_round : bool = False, verbose : bool = True) -> dict:
     '''
     Main function to generate winner from given ballots and alpha (hyperparameter) value.
     Uses Condorcet winner criterion to calculate a matrix for each pair of candidates, but where the number of votes (points)
@@ -8,10 +10,15 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
     Ballot votes (individual voting power) is recalculated with recalculate_ballots() once a winner is determined, similar to STV.
     '''
     score = {candidate : 0 for candidate in candidates}
-    print("ROUND START")
+    if verbose:
+        print("ROUND START")
     # Continues to loop while a winner is not found
     while (len(candidates) - 1) not in score.values():
-        print("Alpha: " + str(alpha))
+        # Tie if alpha reaches infinity
+        if alpha == math.inf:
+            return
+        if verbose:
+            print("Alpha: " + str(alpha))
         score = {candidate : 0 for candidate in candidates}
         pairs = [(candidate, candidate) for candidate in candidates]
         stop = False
@@ -20,7 +27,8 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
             for opponent in candidates:
                 # Check to verify that pair has not already done a head-to-head match
                 if not stop and (candidate, opponent) not in pairs:
-                    print(candidate + " vs " + opponent)
+                    if verbose:
+                        print(str(candidate) + " vs " + str(opponent))
                     candidate_points, opponent_points = 0, 0
                     for ranking, votes in ballots.items():
                         if candidate not in ranking and opponent not in ranking:
@@ -38,31 +46,47 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
                             # For v = 10000, d = 5, a = 0.01, dmv = 10000 * (1 + 5 * 0.01) = 10500 votes after modification
                             distance = ranking.index(candidate) - ranking.index(opponent)
                             if distance < 0:
-                                candidate_points += votes * (1 + distance * alpha)
+                                candidate_points += votes * (1 + abs(distance) * alpha)
                             else:
-                                opponent_points += votes * (1 + distance * alpha)
+                                opponent_points += votes * (1 + abs(distance) * alpha)
                     if candidate_points > opponent_points:
                         score[candidate] += 1
                         if score[candidate] == len(candidates) - 1:
                             stop = True
-                        print(candidate + " beat " + opponent + " " + str(candidate_points) + " to " + str(opponent_points))
+                        if verbose:
+                            print(str(candidate) + " beat " + str(opponent) + " " + str(candidate_points) + " to " + str(opponent_points))
                     elif opponent_points > candidate_points:
                         score[opponent] += 1
                         if score[opponent] == len(candidates) - 1:
                             stop = True
-                        print(opponent + " beat " + candidate + " " + str(opponent_points) + " to " + str(candidate_points))
+                        if verbose:
+                            print(str(opponent) + " beat " + str(candidate) + " " + str(opponent_points) + " to " + str(candidate_points))
                     pairs.append((opponent, candidate))
                     pairs.append((candidate, opponent))
         # Increase alpha proportionally every iteration until winner found
         alpha *= 2
 
-    print("Round results: " + str(score))
+    if verbose:
+        print("Round results: " + str(score))
     winner = list(filter(lambda x : score[x] == len(candidates) - 1, score))[0]
-    print(winner + " is the round winner\n")
+    if verbose:
+        print(str(winner) + " is the round winner\n")
     if last_round:
         return winner
     else:
         return winner, recalculate_ballots(ballots, winner, alpha)
+
+'''For elections.json'''
+def elections_test(ballots : list[Ballot]):
+    converted_ballots = {ballot.ranking : ballot.tally for ballot in ballots}
+    candidates = []
+    for ranking in converted_ballots.keys():
+        for candidate in ranking:
+            if candidate not in candidates:
+                candidates.append(candidate)
+    winner = process_round(converted_ballots, candidates, last_round=True, verbose=False)
+    return (winner, True) if winner else (None, False)
+scheme: Scheme = elections_test
 
 def recalculate_ballots(ballots : dict, winner : str, alpha : float) -> dict:
     '''
@@ -82,6 +106,7 @@ def recalculate_ballots(ballots : dict, winner : str, alpha : float) -> dict:
     return new_ballots
 
 def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
+    '''Function to process a multi-winner election'''
     winners = []
     new_ballots = ballots
     for i in range(num_winners):
@@ -91,7 +116,6 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
                 if candidate not in candidates:
                     candidates.append(candidate)
         assert num_winners - (i + 1) < len(candidates)
-        #print(candidates)
         if i != num_winners - 1:
             winner, new_ballots = process_round(new_ballots, candidates, alpha)
         else:
@@ -99,6 +123,7 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
         winners.append(winner)
     return winners
 
+'''Comment out main function and main call if running elections.json'''
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--election-file", dest="ballots", required=True)
@@ -121,7 +146,10 @@ def main():
 
     winners = process_election(ballots, num_winners, alpha)
     print("ELECTION RESULTS")
-    for i, winner in enumerate(winners):
-        print(str(i+1) + ". " + winner)
+    if winners[0] is None:
+        print("There was a tie.")
+    else:
+        for i, winner in enumerate(winners):
+            print(str(i+1) + ". " + winner)
 main()
 
