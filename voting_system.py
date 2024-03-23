@@ -16,7 +16,7 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
     while (len(candidates) - 1) not in score.values():
         # Tie if alpha reaches infinity
         if alpha == math.inf:
-            return
+            return None if last_round else None, None
         if verbose:
             print("Alpha: " + str(alpha))
         score = {candidate : 0 for candidate in candidates}
@@ -85,7 +85,7 @@ def elections_test(ballots : list[Ballot]):
             if candidate not in candidates:
                 candidates.append(candidate)
     winner = process_round(converted_ballots, candidates, last_round=True, verbose=False)
-    return (winner, True) if winner else (None, False)
+    return (winner, True) if winner not in [None, (None, None)] else (None, False)
 scheme: Scheme = elections_test
 
 def recalculate_ballots(ballots : dict, winner : str, alpha : float) -> dict:
@@ -110,6 +110,8 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
     winners = []
     new_ballots = ballots
     for i in range(num_winners):
+        if None in winners:
+            return winners
         candidates = []
         for ballot in new_ballots:
             for candidate in ballot:
@@ -124,32 +126,32 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
     return winners
 
 '''Comment out main function and main call if running elections.json'''
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--election-file", dest="ballots", required=True)
-    parser.add_argument("-n", "--num-winners", dest="num_winners", default=1)
-    parser.add_argument("-a", "--alpha", dest="alpha", default=0.01)
-    args = parser.parse_args()
+# def main():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("-e", "--election-file", dest="ballots", required=True)
+#     parser.add_argument("-n", "--num-winners", dest="num_winners", default=1)
+#     parser.add_argument("-a", "--alpha", dest="alpha", default=0.01)
+#     args = parser.parse_args()
 
-    num_winners = int(args.num_winners)
-    alpha = float(args.alpha)
+#     num_winners = int(args.num_winners)
+#     alpha = float(args.alpha)
 
-    ballots = {}
-    with open(args.ballots, "r") as election:
-        for line in election:
-            split = line.strip().split(",")
-            if split[1] == '':
-                continue
-            votes = int(split[0])
-            ranking = tuple(split[1:])
-            ballots[ranking] = votes
+#     ballots = {}
+#     with open(args.ballots, "r") as election:
+#         for line in election:
+#             split = line.strip().split(",")
+#             if split[1] == '':
+#                 continue
+#             votes = int(split[0])
+#             ranking = tuple(split[1:])
+#             ballots[ranking] = votes
 
-    winners = process_election(ballots, num_winners, alpha)
-    print("ELECTION RESULTS")
-    if winners[0] is None:
-        print("There was a tie.")
-    else:
-        for i, winner in enumerate(winners):
-            print(str(i+1) + ". " + winner)
-main()
+#     winners = process_election(ballots, num_winners, alpha)
+#     print("ELECTION RESULTS")
+#     if None in winners:
+#         print("There was a tie in round " + str(winners.index(None)+1) + ".")
+#     else:
+#         for i, winner in enumerate(winners):
+#             print(str(i+1) + ". " + winner)
+#main()
 
