@@ -6,7 +6,7 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
     '''
     Main function to generate winner from given ballots and alpha (hyperparameter) value.
     Uses Condorcet winner criterion to calculate a matrix for each pair of candidates, but where the number of votes (points)
-    is manipulated by the alpha value to enforce determinism.
+    is manipulated by the alpha value to enforce (but not guarantee) determinism.
     Ballot votes (individual voting power) is recalculated with recalculate_ballots() once a winner is determined, similar to STV.
     '''
     score = {candidate : 0 for candidate in candidates}
@@ -15,7 +15,7 @@ def process_round(ballots : dict, candidates : list, alpha : float = 0.01, last_
     # Continues to loop while a winner is not found
     while (len(candidates) - 1) not in score.values():
         # Tie if alpha reaches infinity
-        if alpha == math.inf:
+        if alpha == 10.24:
             return None if last_round else None, None
         if verbose:
             print("Alpha: " + str(alpha))
@@ -125,7 +125,7 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
         winners.append(winner)
     return winners
 
-'''Comment out main function and main call if running elections.json'''
+# '''Comment out main function and main call if running elections.json'''
 # def main():
 #     parser = argparse.ArgumentParser()
 #     parser.add_argument("-e", "--election-file", dest="ballots", required=True)
@@ -153,5 +153,5 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
 #     else:
 #         for i, winner in enumerate(winners):
 #             print(str(i+1) + ". " + winner)
-#main()
+# main()
 
