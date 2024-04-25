@@ -100,9 +100,9 @@ def recalculate_ballots(ballots : dict, winner : str, alpha : float) -> dict:
             distance_from_first = len(ballot) if winner not in ballot else ballot.index(winner)
             ballot_without_winner = tuple(filter(lambda x : x != winner, ballot))
             if ballot_without_winner not in new_ballots:
-                new_ballots[ballot_without_winner] = ballots[ballot] / (1 + distance_from_first * alpha)
+                new_ballots[ballot_without_winner] = ballots[ballot] / (1 + (len(ballot) - distance_from_first) * alpha)
             else:
-                new_ballots[ballot_without_winner] += ballots[ballot] / (1 + distance_from_first * alpha)
+                new_ballots[ballot_without_winner] += ballots[ballot] / (1 + (len(ballot) - distance_from_first) * alpha)
     return new_ballots
 
 def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
@@ -125,33 +125,33 @@ def process_election(ballots : dict, num_winners : int, alpha : float) -> list:
         winners.append(winner)
     return winners
 
-# '''Comment out main function and main call if running elections.json'''
-# def main():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-e", "--election-file", dest="ballots", required=True)
-#     parser.add_argument("-n", "--num-winners", dest="num_winners", default=1)
-#     parser.add_argument("-a", "--alpha", dest="alpha", default=0.01)
-#     args = parser.parse_args()
+'''Comment out main function and main call if running elections.json'''
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--election-file", dest="ballots", required=True)
+    parser.add_argument("-n", "--num-winners", dest="num_winners", default=1)
+    parser.add_argument("-a", "--alpha", dest="alpha", default=0.01)
+    args = parser.parse_args()
 
-#     num_winners = int(args.num_winners)
-#     alpha = float(args.alpha)
+    num_winners = int(args.num_winners)
+    alpha = float(args.alpha)
 
-#     ballots = {}
-#     with open(args.ballots, "r") as election:
-#         for line in election:
-#             split = line.strip().split(",")
-#             if split[1] == '':
-#                 continue
-#             votes = int(split[0])
-#             ranking = tuple(split[1:])
-#             ballots[ranking] = votes
+    ballots = {}
+    with open(args.ballots, "r") as election:
+        for line in election:
+            split = line.strip().split(",")
+            if split[1] == '':
+                continue
+            votes = int(split[0])
+            ranking = tuple(split[1:])
+            ballots[ranking] = votes
 
-#     winners = process_election(ballots, num_winners, alpha)
-#     print("ELECTION RESULTS")
-#     if None in winners:
-#         print("There was a tie in round " + str(winners.index(None)+1) + ".")
-#     else:
-#         for i, winner in enumerate(winners):
-#             print(str(i+1) + ". " + winner)
-# main()
+    winners = process_election(ballots, num_winners, alpha)
+    print("ELECTION RESULTS")
+    if None in winners:
+        print("There was a tie in round " + str(winners.index(None)+1) + ".")
+    else:
+        for i, winner in enumerate(winners):
+            print(str(i+1) + ". " + winner)
+main()
 
